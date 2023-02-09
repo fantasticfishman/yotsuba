@@ -11,7 +11,7 @@ scene = mi.load_dict({
     'light': {'type': 'constant'},
     'teapot': {
         'type': 'obj',
-        'filename': './scenes/meshes/sussycube.obj',
+        'filename': './scenes/meshes/amogus.obj',
         'to_world': T.translate([0, 0, -1.5]),
         'bsdf': {
             'type': 'diffuse',
@@ -30,7 +30,7 @@ def load_sensor(r, phi, theta):
         'to_world': T.look_at(
             origin=origin,
             target=[0, 0, 0],
-            up=[0, 0, 1]
+            up=[0, 1, 0]
         ),
         'sampler': {
             'type': 'independent',
@@ -48,9 +48,9 @@ def load_sensor(r, phi, theta):
     })
 
 sensor_count = 6
-radius = 12
+radius = 5
 phis = [20.0 * i for i in range(sensor_count)]
-theta = 60.0
+theta = 10.0
 
 sensors = [load_sensor(radius, phi, theta) for phi in phis]
 

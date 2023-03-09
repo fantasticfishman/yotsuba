@@ -1,5 +1,5 @@
 import pycolmap
-reconstruction = pycolmap.Reconstruction("./gerrard-hall/sparse")
+reconstruction = pycolmap.Reconstruction("./south-building/sparse")
 print(reconstruction.summary())
 
 for image_id, image in reconstruction.images.items():

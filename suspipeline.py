@@ -1,13 +1,66 @@
+import pycolmap
+import trimesh
+import xatlas
 import drjit as dr
 import mitsuba as mi
 import matplotlib.pyplot as plt
 
+# FRIST WE RECONSTRUCT WITH COLMAP
+output_path: pathlib.Path() # put the paths here
+image_dir: pathlib.Path()
+
+output_path.mkdir()
+mvs_path = output_path / "mvs"
+database_path = output_path / "database.db"
+
+pycolmap.extract_features(database_path, image_dir)
+pycolmap.match_exhaustive(database_path)
+maps = pycolmap.incremental_mapping(database_path, image_dir, output_path)
+maps[0].write(output_path)
+# dense reconstruction
+pycolmap.undistort_images(mvs_path, output_path, image_dir)
+pycolmap.patch_match_stereo(mvs_path)  # requires compilation with CUDA
+pycolmap.stereo_fusion(mvs_path / "dense.ply", mvs_path)
+
+# THEN WE GET XATLAS TO DO UV MAPPING
+mesh = trimesh.load_mesh("meshed-poisson.ply")
+vmapping, indices, uvs = xatlas.parametrize(mesh.vertices, mesh.faces)
+xatlas.export("output.obj", mesh.vertices[vmapping], indices, uvs)
+
+# PLACING THE TEXTURE ON THE UVMAPPED MESH WITH MITSUBA 3
+mi.set_variant("scalar_rgb")
+
+from mitsuba import ScalarTransform4f as T
+
+scene = mi.load_dict({
+    'texture_id':     
+    'type': '<texture_type>':
+    # .. texture parameters ..
+    ,
+    'type': 'scene',
+    # The keys below correspond to object IDs and can be chosen arbitrarily
+    'integrator': {'type': 'path'},
+    'light': {'type': 'constant'},
+    'cube': {      #put name of enctured matieral 
+        'type': 'obj',
+        'filename': 'xxx' #insert path to uv maped obj file
+        # 'to_world': T.translate([0, 0, -1.5]),
+        'bsdf': {
+            'type': 'ref',
+            'id' : 'texture_id'  #idk if we are suppose to pur the path name here? 
+            
+       },
+    ,
+    }
+})
+
+#multiangle optimize
 mi.set_variant('llvm_ad_rgb')
 #do if on nonmac
 # mi.set_variant('cuda_ad_rgb')
 
-scene = mi.load_file('./scenes/cbox.xml', res=128, integrator='prb')
 
+#scene = mi.load_file('./scenes/cbox.xml', res=128, integrator='prb'
 from mitsuba import ScalarTransform4f as T
 
 def load_sensor(r, phi, theta):
@@ -165,3 +218,23 @@ for sensor in sensors:
 # plt.plot(errors)
 # plt.xlabel('Iteration'); plt.ylabel('MSE(param)'); plt.title('Parameter error plot');
 # plt.show()
+
+# sensor_count = 6
+
+# radius = 12
+# phis = [20.0 * i for i in range(sensor_count)]
+# theta = 60.0
+
+# sensors = [load_sensor(radius, phi, theta) for phi in phis]
+
+# images = [mi.render(scene, spp=16, sensor=sensor) for sensor in sensors]
+
+# mi.util.convert_to_bitmap(images[1])
+
+# #saves it to desktop
+# mi.Bitmap(images[1]).write('image.exr')
+
+
+
+
+

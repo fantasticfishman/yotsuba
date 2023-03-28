@@ -1,3 +1,4 @@
+#demo of multiangle sensors
 import mitsuba as mi
 mi.set_variant("scalar_rgb")
 

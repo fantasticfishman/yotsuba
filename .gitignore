@@ -1,3 +1,5 @@
-./colmaptestfiles/
+/colmaptestfiles/south-building/
+/.vscode
+*.DS_Store
 bluemogus.py
 mogusangle.py

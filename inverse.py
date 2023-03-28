@@ -1,8 +1,9 @@
+#inverse rendering demo
 import drjit as dr
 import mitsuba as mi
 import matplotlib.pyplot as plt
 
-mi.set_variant('cuda_ad_rgb')
+mi.set_variant('llvm_ad_rgb')
 
 scene = mi.load_file('./scenes/cbox.xml', res=128, integrator='prb')
 
@@ -12,6 +13,9 @@ image_ref = mi.render(scene, spp=512)
 mi.util.convert_to_bitmap(image_ref)
 
 params = mi.traverse(scene)
+
+for cock in params:
+    print(cock)
 
 key = 'red.reflectance.value'
 

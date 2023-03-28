@@ -1,3 +1,4 @@
+#optomization from multiple angles, ran for each angle
 import drjit as dr
 import mitsuba as mi
 import matplotlib.pyplot as plt

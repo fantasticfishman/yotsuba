@@ -2,135 +2,165 @@ import drjit as dr
 import mitsuba as mi
 import matplotlib.pyplot as plt
 
-#get model that is not uv mapped
-
-import trimesh
-import xatlas
-
-#multiangle optimize
 mi.set_variant('llvm_ad_rgb')
-#do if on nonmac
-# mi.set_variant('cuda_ad_rgb')
 
-mesh1 = trimesh.load_mesh("amogus.ply")
+# scene = mi.load_file('./scenes/simple.xml', res=512)
+#identical scene with red texture
+refscene = mi.load_file('./scenes/simplesus.xml')
 
-atlas = xatlas.Atlas()
+image_ref = mi.render(refscene, spp=512)
 
-vmapping, indices, uvs = xatlas.parametrize(mesh1.vertices, mesh1.faces)
+#preview reference image
+mi.util.convert_to_bitmap(image_ref)
+plt.imshow(image_ref)
+plt.show()
 
-# Optionally parametrize the generation with
-# `xatlas.ChartOptions` and `xatlas.PackOptions`.
-xatlas.export("output.obj", mesh1.vertices[vmapping], indices, uvs)
+# construct scene to contain optimized texture
 
+# apply texture to mesh
 
-initial_heightmap_resolution = [
-    r // (2**4)
-    for r in (512,512)
-]
-upsampling_steps = dr.sqr(
-    dr.linspace(mi.Float,
-                0,
-                1,
-                4 + 1,
-                endpoint=False).numpy()[1:])
-upsampling_steps = (1000 * upsampling_steps).astype(int)
-print('The resolution of the heightfield will be doubled at iterations:',
-      upsampling_steps)
-
-#create blank texture bitmap
-meshtext = mi.load_dict({
-    'type': 'bitmap',
-    'id': 'mesh_texture',
-    'bitmap': mi.Bitmap(dr.zeros(mi.TensorXf, initial_heightmap_resolution)),
-    'raw': True,
-})
-
-# Actually optimized: the heightmap texture
-meshparams = mi.traverse(meshtext)
-meshparams.keep(['data'])
-opt = mi.ad.Adam(lr=3e-5, params=meshparams)
-
-#apply texture to output mesh
-
-#this is done in the opt amongbox xml
+# blacktext = mi.Bitmap(dr.zeros(mi.TensorXf, [512,512]))
+# greytext = mi.Bitmap(dr.full(mi.TensorXf, 0.5, (512,512)))
 
 scene = mi.load_dict({
     "type": "scene",
-    "integrator": {
+    "myintegrator": {
         "type": "path",
+        "max_depth" : 8
+    },
+    "meshtext" : {
+        "type" : "bitmap",
+        "id": "opt_texture",
+        "bitmap": mi.Bitmap(dr.full(mi.TensorXf, 0.5, (16,16))),
+        "raw": True,
+    },
+    "testtext": {
+        'type': 'bitmap',
+        'filename': 'texture1.jpg',
+        # 'wrap_mode': 'mirror'
     },
     "mysensor": {
         "type":
         "perspective",
-        "near_clip":
-        1.0,
-        "far_clip":
-        1000.0,
+        # "near_clip":
+        # 1.0,
+        # "far_clip":
+        # 1000.0,
+        "fov":
+        80,
         "to_world":
-        mi.ScalarTransform4f.look_at(origin=[1, 1, 1],
-                                     target=[0, 0, 0],
-                                     up=[0, 0, 1]),
+        mi.ScalarTransform4f.rotate(axis=[1, 0, 0], angle=60) \
+                                    .look_at(target=[0, 0, 0],
+                                     origin=[0, 17, 3],
+                                     up=[0, 1, 0]),
+
+        "myfilm": {
+            "type": "hdrfilm",
+            "rfilter": {
+                "type": "box"
+            },
+            "width": 256,
+            "height": 256,
+        },
         "mysampler": {
             "type": "independent",
-            "sample_count": 4,
+            "sample_count": 512,
         },
     },
     "myemitter": {
-        "type": "constant"
+        "type": "envmap",
+        "filename": "./scenes/textures/bank_vault_2k.hdr",
     },
-    "mytexture" : {
-        "type": "ref",
-        "id": meshtext,
+    'testbsdf': {
+        'type': 'diffuse',
+        'reflectance': {
+            'type': 'ref',
+            # 'id': 'testtext'
+            'id': 'opt_texture'
+        }
     },
-    "myobject": {
+    "myshape": {
         "type": "obj",
-        "filename": "output.obj",
-        "bsdf" : "mytexture",
+        "filename" : "./mogusmap.obj",
+        # "bsdfred": {
+        #     "type": "diffuse",
+        #     "reflectance": {
+        #         "type": "rgb",
+        #         "value": [0.4, 0, 0],
+        #         "type" : "bitmap",
+        #         'filename' : 'texture1.jpg',
+        #     }
+        # },
+        "bsdftest1": {
+            "type": "ref",
+            'id' : 'testbsdf'
+        },
+        "to_world" : mi.ScalarTransform4f.scale(5) \
+        .rotate([0,1,0], angle = 45) \
+        .rotate([1,0,0], angle = 270)
     }
 })
 
-refscene = mi.load_file('./scenes/ref_among_box.xml')
-refimg = mi.render(refscene)
-scene = mi.load_file('./scenes/opt_among_box.xml')
 
+#initialize optomization stuff
 sceneparams = mi.traverse(scene)
 
-iterations = 1000
+# this is the scene texture value to be optimized
+
+#declare optimizer 
+key = 'opt_texture.data'
+dr.enable_grad(sceneparams[key])
+opt = mi.ad.Adam(lr=1e-2)
+opt[key] = sceneparams[key]
+sceneparams.update(opt)
+
+#preview initial image
+image_opt = mi.render(scene,sceneparams, spp = 512)
+# mi.util.convert_to_bitmap(image_opt)
+plt.imshow(image_opt)
+plt.show()
+
+#mse function
+def mse(image):
+    return dr.mean(dr.sqr(image - image_ref));
+
+#optomization loop
+iterations = 100
 spp = 8
+
+#start high and decrease learning rate?
 for it in range(iterations):
+    #increase quality and decrease learning rate over time
+    # if(it % 10 == 0):
+    #     spp = spp * 2
+    #     opt.set_learning_rate(0.5 * opt.lr[key])
+    image_opt = mi.render(scene,sceneparams,spp = spp)
+    # plt.imshow(image_ref)
+    # plt.show()
+    # plt.imshow(image_opt)
+    # plt.show()
 
-    #apply displacement?
-    dr.enable_grad(meshparams['data'])
-    sceneparams.update()
+    loss = mse(image_opt)
+    print(loss)
 
-    #render
-    image = mi.render(scene,meshparams,seed=it, spp=2*spp, spp_grad=spp)
-    #loss
+    dr.backward(loss)
 
-    loss=dr.mean(dr.sqr(image - refimg))
-
-    #backstep(loss)
-    dr.backward(loss);
-
-    #step (no params?)
     opt.step()
 
-    #increase resolution
+    # opt[key] = dr.clamp(opt[key], 0.0, 1.0)
+    # update the data of the texture(does not update scene)
+    sceneparams[key] = dr.clamp(opt[key], 0.0,1.0)
+    sceneparams.update()
+    # scene['meshtext'].set_bitmap(mi.Bitmap(sceneparams['opt_texture.data']))
+    # update scene texture meshtext.bitmap specifically 
+    # scene['meshtext']['bitmap'] = mi.Bitmap(sceneparams[key])
 
-    if it in upsampling_steps:
-        opt['data'] = dr.upsample(opt['data'], scale_factor=(2, 2, 1))
+    print("completed iteration " + str(it))
 
-    meshparams.update(opt)
 
-    # Increase rendering quality toward the end of the optimization
-    if it in (int(0.7 * iterations), int(0.9 * iterations)):
-        spp *= 2
-        opt.set_learning_rate(0.5 * opt.lr['data'])
-sceneparams.update()
+image_opt = mi.render(scene, spp=512)
 
-#render
-image = mi.render(scene,meshparams,seed=it, spp=2*spp, spp_grad=spp)
-
-mi.util.convert_to_bitmap(image)
-plt.imshow(image)
+# Preview the final image
+mi.util.convert_to_bitmap(image_opt)
+plt.imshow(image_opt)
 plt.show()

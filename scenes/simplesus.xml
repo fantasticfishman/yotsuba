@@ -1,0 +1,53 @@
+<scene version='3.0.0'>
+    <default name="spp" value="256" />
+    <default name="res" value="256" />
+
+    <integrator type="path">
+        <integer name="max_depth" value="8" />
+    </integrator>
+
+    <sensor type="perspective" id="sensor">
+        <float name="fov" value="80" />
+        <transform name="to_world">
+            <lookat target="0, 0, 0"
+                origin="0, 17, 3"
+                up="0, 1, 0" />
+
+            <rotate x="1" angle="60"/>
+        </transform>
+        <sampler type="independent">
+            <integer name="sample_count" value="$spp" />
+        </sampler>
+        <film type="hdrfilm">
+            <rfilter type="box" />
+            <integer name="width" value="$res" />
+            <integer name="height" value="$res" />
+        </film>
+    </sensor>
+
+    <!-- <shape type = "cube">
+        <bsdf type="diffuse">
+            <rgb name="reflectance" value="0.4 0 0" />
+        </bsdf>
+        <transform name="to_world">
+            <scale value="1" />
+            <rotate x="1" angle="270"/>
+            <rotate y="1" angle="45"/>
+        </transform>
+    </shape> -->
+    <shape type="ply" id="amogus">
+        <string name="filename" value="./amogus.ply" />
+        <bsdf type="diffuse">
+            <rgb name="reflectance" value="0.4 0 0" />
+        </bsdf>
+        <transform name="to_world">
+            <scale value="5" />
+            <rotate x="1" angle="270"/>
+            <rotate y="1" angle="45"/>
+        </transform>
+    </shape>
+
+    <emitter type="envmap">
+        <string name="filename" value="textures/bank_vault_2k.hdr" />
+    </emitter>
+</scene>

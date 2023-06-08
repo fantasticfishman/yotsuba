@@ -2,6 +2,11 @@
     <default name="spp" value="256" />
     <default name="res" value="256" />
 
+    <texture type="checkerboard" id="checkerboard_texture">
+        <rgb name="color0" value="0.1, 0.1, 0.1" />
+        <rgb name="color1" value="0.5, 0.5, 0.5" />
+    </texture>
+
     <integrator type="path">
         <integer name="max_depth" value="8" />
     </integrator>
@@ -13,7 +18,7 @@
                 origin="0, 17, 3"
                 up="0, 1, 0" />
 
-            <rotate x="1" angle="60"/>
+            <rotate x="1" angle="60" />
         </transform>
         <sampler type="independent">
             <integer name="sample_count" value="$spp" />
@@ -25,18 +30,7 @@
         </film>
     </sensor>
 
-    <!-- <shape type = "cube">
-        <bsdf type="diffuse">
-            <rgb name="reflectance" value="0.4 0 0" />
-        </bsdf>
-        <transform name="to_world">
-            <scale value="1" />
-            <rotate x="1" angle="270"/>
-            <rotate y="1" angle="45"/>
-        </transform>
-    </shape> -->
-    <shape type="ply" id="amogus">
-        <string name="filename" value="./amogus.ply" />
+    <!-- <shape type = "rectangle">
         <bsdf type="diffuse">
             <rgb name="reflectance" value="0.4 0 0" />
         </bsdf>
@@ -45,9 +39,33 @@
             <rotate x="1" angle="270"/>
             <rotate y="1" angle="45"/>
         </transform>
+    </shape> -->
+
+    <!-- <texture type="bitmap">
+                <string name="texture1" value="./texture1.jpg" />
+                <string name="wrap_mode" value="mirror" />
+            </texture> -->
+    <!-- <rgb name="reflectance" value="0.4 0 0" /> -->
+    <shape type="obj" id="amogus">
+        <string name="filename" value="./mogusmap.obj" />
+        <bsdf type="diffuse">
+            <!-- <texture type="bitmap">
+                <string name="filename" value="texture1.jpg" />
+                <string name="wrap_mode" value="mirror" />
+            </texture> -->
+            <rgb name="reflectance" value="0.4 0 0" />
+        </bsdf>
+        <transform name="to_world">
+            <scale value="5" />
+            <rotate x="1" angle="270" />
+            <rotate y="1" angle="45" />
+        </transform>
     </shape>
 
     <emitter type="envmap">
         <string name="filename" value="textures/bank_vault_2k.hdr" />
     </emitter>
+    <!-- <emitter type="constant">
+        <rgb name="radiance" value="1.0"/>
+    </emitter> -->
 </scene>

@@ -4,37 +4,32 @@ import matplotlib.pyplot as plt
 
 mi.set_variant('llvm_ad_rgb')
 
+# This script demos optimizing a blank texture to anything else using gradient descent.
+#the first image displayed is the mesh with a texture applied(representing ground truth)
+# second image is blank texture
+# after optomization final image with optomized texture is displayed
+
 # scene = mi.load_file('./scenes/simple.xml', res=512)
 #identical scene with red texture
 # refscene = mi.load_file('./scenes/simplesus.xml')
 
-# USE TESTTEXT INSTEAD OF OPT TEXTURE
+# Create reference scene with truth texture
 refscene = mi.load_dict({
     "type": "scene",
     "myintegrator": {
         "type": "path",
         "max_depth" : 8
     },
-    "meshtext" : {
-        "type" : "bitmap",
-        "id": "opt_texture",
-        "bitmap": mi.Bitmap(dr.full(mi.TensorXf, 0.5, (256,256,3))),
-        "raw": True,
-    },
     "testtext": {
         'type': 'bitmap',
         "id": "testtext",
         # 'filename': 'texture1.jpg',
-        'filename': 'texture2.png',
+        'filename': './scenes/textures/texture2.png',
         # 'wrap_mode': 'mirror'
     },
     "mysensor": {
         "type":
         "perspective",
-        # "near_clip":
-        # 1.0,
-        # "far_clip":
-        # 1000.0,
         "fov":
         80,
         "to_world":
@@ -60,13 +55,6 @@ refscene = mi.load_dict({
         "type": "envmap",
         "filename": "./scenes/textures/bank_vault_2k.hdr",
     },
-    # "myemitter": {
-    #     'type': 'constant',
-    #     'radiance': {
-    #         'type': 'rgb',
-    #         'value': 1.0,
-    #     }
-    # },
     'testbsdf': {
         'type': 'diffuse',
         'reflectance': {
@@ -76,18 +64,8 @@ refscene = mi.load_dict({
         }
     },
     "myshape": {
-        # "type" : "rectangle",
         "type": "obj",
-        "filename" : "./mogusmap.obj",
-        # "bsdfred": {
-        #     "type": "diffuse",
-        #     "reflectance": {
-        #         "type": "rgb",
-        #         "value": [0.4, 0, 0],
-        #         "type" : "bitmap",
-        #         'filename' : 'texture1.jpg',
-        #     }
-        # },
+        "filename" : "./scenes/meshes/mogusmap.obj",
         "bsdftest1": {
             "type": "ref",
             'id' : 'testbsdf'
@@ -105,12 +83,9 @@ mi.util.convert_to_bitmap(image_ref)
 plt.imshow(image_ref)
 plt.show()
 
-# construct scene to contain optimized texture
+# construct identical scene with blank texture
 
 # apply texture to mesh
-
-# blacktext = mi.Bitmap(dr.zeros(mi.TensorXf, [512,512]))
-# greytext = mi.Bitmap(dr.full(mi.TensorXf, 0.5, (512,512)))
 
 scene = mi.load_dict({
     "type": "scene",
@@ -124,20 +99,9 @@ scene = mi.load_dict({
         "bitmap": mi.Bitmap(dr.full(mi.TensorXf, 0.5, (256,256,3))),
         "raw": True,
     },
-    "testtext": {
-        'type': 'bitmap',
-        "id": "testtext",
-        # 'filename': 'texture1.jpg',
-        'filename': 'texture2.png',
-        # 'wrap_mode': 'mirror'
-    },
     "mysensor": {
         "type":
         "perspective",
-        # "near_clip":
-        # 1.0,
-        # "far_clip":
-        # 1000.0,
         "fov":
         80,
         "to_world":
@@ -179,18 +143,8 @@ scene = mi.load_dict({
         }
     },
     "myshape": {
-        # "type" : "rectangle",
         "type": "obj",
-        "filename" : "./mogusmap.obj",
-        # "bsdfred": {
-        #     "type": "diffuse",
-        #     "reflectance": {
-        #         "type": "rgb",
-        #         "value": [0.4, 0, 0],
-        #         "type" : "bitmap",
-        #         'filename' : 'texture1.jpg',
-        #     }
-        # },
+        "filename" : "./scenes/meshes/mogusmap.obj",
         "bsdftest1": {
             "type": "ref",
             'id' : 'testbsdf'
@@ -228,7 +182,7 @@ def mse(image):
 iterations = 80
 spp = 16
 
-#start high and decrease learning rate?
+#start high and decrease learning rate? nah
 for it in range(iterations):
     #increase quality and decrease learning rate over time
     # if(it % 10 == 0):
@@ -251,9 +205,6 @@ for it in range(iterations):
     # update the data of the texture(does not update scene)
     sceneparams[key] = dr.clamp(opt[key], 0.0, 1.0)
     sceneparams.update()
-    # scene['meshtext'].set_bitmap(mi.Bitmap(sceneparams['opt_texture.data']))
-    # update scene texture meshtext.bitmap specifically
-    # scene['meshtext']['bitmap'] = mi.Bitmap(sceneparams[key])
 
     print("completed iteration " + str(it))
 

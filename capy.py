@@ -8,7 +8,7 @@ mi.set_variant('llvm_ad_rgb')
 #identical scene with red texture
 # refscene = mi.load_file('./scenes/simplesus.xml')
 
-# USE TESTTEXT INSTEAD OF OPT TEXTURE
+# This uses a capybara(important), and tests it out with a dielectric texture
 refscene = mi.load_dict({
     "type": "scene",
     "myintegrator": {
@@ -25,16 +25,12 @@ refscene = mi.load_dict({
         'type': 'bitmap',
         "id": "testtext",
         # 'filename': 'texture1.jpg',
-        'filename': 'capybara_texture.png',
+        'filename': './scenes/meshes/capybara_texture.png',
         # 'wrap_mode': 'mirror'
     },
     "mysensor": {
         "type":
         "perspective",
-        # "near_clip":
-        # 1.0,
-        # "far_clip":
-        # 1000.0,
         "fov":
         80,
         "to_world":
@@ -60,13 +56,6 @@ refscene = mi.load_dict({
         "type": "envmap",
         "filename": "./scenes/textures/sunsky.hdr",
     },
-    # "myemitter": {
-    #     'type': 'constant',
-    #     'radiance': {
-    #         'type': 'rgb',
-    #         'value': 1.0,
-    #     }
-    # },
     'testbsdf': {
         'type': 'diffuse',
         'reflectance': {
@@ -83,16 +72,7 @@ refscene = mi.load_dict({
     "myshape": {
         # "type" : "rectangle",
         "type": "obj",
-        "filename" : "./rat.obj",
-        # "bsdfred": {
-        #     "type": "diffuse",
-        #     "reflectance": {
-        #         "type": "rgb",
-        #         "value": [0.4, 0, 0],
-        #         "type" : "bitmap",
-        #         'filename' : 'texture1.jpg',
-        #     }
-        # },
+        "filename" : "./scenes/meshes/rat.obj",
         "bsdftest1": {
             "type": "ref",
             'id' : 'metalbsdf'
@@ -116,9 +96,6 @@ plt.show()
 
 # apply texture to mesh
 
-# blacktext = mi.Bitmap(dr.zeros(mi.TensorXf, [512,512]))
-# greytext = mi.Bitmap(dr.full(mi.TensorXf, 0.5, (512,512)))
-
 scene = mi.load_dict({
     "type": "scene",
     "myintegrator": {
@@ -135,16 +112,12 @@ scene = mi.load_dict({
         'type': 'bitmap',
         "id": "testtext",
         # 'filename': 'texture1.jpg',
-        'filename': 'texture2.png',
+        'filename': './scenes/textures/texture2.png',
         # 'wrap_mode': 'mirror'
     },
     "mysensor": {
         "type":
         "perspective",
-        # "near_clip":
-        # 1.0,
-        # "far_clip":
-        # 1000.0,
         "fov":
         80,
         "to_world":
@@ -188,7 +161,7 @@ scene = mi.load_dict({
     "myshape": {
         # "type" : "rectangle",
         "type": "ply",
-        "filename" : "./capybara.ply",
+        "filename" : "./scenes/meshes/capybara.ply",
         # "bsdfred": {
         #     "type": "diffuse",
         #     "reflectance": {

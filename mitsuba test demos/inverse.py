@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 mi.set_variant('llvm_ad_rgb')
 
-scene = mi.load_file('./scenes/cbox.xml', res=128, integrator='prb')
+scene = mi.load_file('../scenes/cbox.xml', res=128, integrator='prb')
 
 image_ref = mi.render(scene, spp=512)
 

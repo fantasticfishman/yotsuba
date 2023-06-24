@@ -25,6 +25,8 @@ from pytorch3d.renderer import (
     TexturesVertex
 )
 
+#demo of pytorch, trying to render a fancy shiny cow
+
 sys.path.append(os.path.abspath(''))
 
 from plot_image_grid import image_grid
@@ -36,7 +38,7 @@ else:
     device = torch.device("cpu")
 
 
-obj_filename = "./cow.obj"
+obj_filename = "./scenes/meshes/cow.obj"
 # obj_filename = "./glassmogus.obj"
 
 
